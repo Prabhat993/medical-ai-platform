@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Medical Platform - Pneumonia Detection</title>
+    
+    <!-- React and ReactDOM from CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #root {
+            min-height: 100vh;
+        }
+
+        /* Animated Background */
+        .animated-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0) scale(1);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            50% {
+                transform: translateY(-100vh) translateX(50px) scale(1.5);
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-200vh) translateX(100px) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        /* Container Styles */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 300;
+        }
+
+        /* Main Card */
+        .main-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 30px;
+            padding: 50px;
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 3px solid #fdcb6e;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 25px rgba(253, 203, 110, 0.3);
+            animation: fadeIn 1s ease-out;
+        }
+
+        .disclaimer-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .disclaimer-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #d68910;
+            margin-bottom: 10px;
+        }
+
+        .disclaimer-text {
+            color: #856404;
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        /* Upload Area */
+        .upload-section {
+            margin-bottom: 40px;
+        }
+
+        .upload-area {
+            border: 4px dashed #667eea;
+            border-radius: 25px;
+            padding: 60px 30px;
+            text-align: center;
+            cursor: pointer;
+            background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .upload-area:hover::before {
+            width: 600px;
+            height: 600px;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3);
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: linear-gradient(135deg, #e8ebff 0%, #dce0ff 100%);
+            transform: scale(1.02);
+        }
+
+        .upload-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            animation: floatUpDown 3s ease-in-out infinite;
+        }
+
+        @keyframes floatUpDown {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .upload-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #718096;
+            font-size: 1rem;
+        }
+
+        /* Preview Area */
+        .preview-area {
+            margin: 30px 0;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .preview-image {
+            width: 100%;
+            max-height: 450px;
+            object-fit: contain;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+        }
+
+        .preview-image:hover {
+            transform: scale(1.02);
+        }
+
+        /* Button */
+        .btn {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-primary:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+            margin-top: 15px;
+            box-shadow: 0 10px 30px rgba(127, 140, 141, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Loader */
+        .loader-container {
+            text-align: center;
+            padding: 40px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .spinner {
+            width: 80px;
+            height: 80px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            font-size: 1.3rem;
+            color: #667eea;
+            font-weight: 600;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        /* Results */
+        .result-card {
+            margin-top: 40px;
+            padding: 40px;
+            border-radius: 25px;
+            animation: slideInUp 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: shimmer 4s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-card.positive {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border: 4px solid #ef5350;
+            box-shadow: 0 20px 60px rgba(239, 83, 80, 0.4);
+        }
+
+        .result-card.negative {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border: 4px solid #66bb6a;
+            box-shadow: 0 20px 60px rgba(102, 187, 106, 0.4);
+        }
+
+        .result-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .result-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .result-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .result-card.positive .result-title {
+            color: #c62828;
+        }
+
+        .result-card.negative .result-title {
+            color: #2e7d32;
+        }
+
+        .confidence-section {
+            margin: 30px 0;
+        }
+
+        .confidence-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .confidence-bar {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 50px;
+            height: 50px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .confidence-fill {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: white;
+            border-radius: 50px;
+            transition: width 2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .warning-box {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 25px;
+            border-left: 5px solid #ff9800;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .warning-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #e65100;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .warning-text {
+            color: #424242;
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        /* Info Section */
+        .info-section {
+            margin-top: 50px;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 25px;
+            padding: 40px;
+            border: 3px solid #42a5f5;
+            animation: fadeIn 1.2s ease-out;
+        }
+
+        .info-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #1565c0;
+            margin-bottom: 30px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .info-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #42a5f5;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .info-card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1565c0;
+            margin-bottom: 12px;
+        }
+
+        .info-card-text {
+            color: #546e7a;
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .main-card {
+                padding: 30px 20px;
+            }
+
+            .logo {
+                font-size: 60px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        {% raw %}
+        const { useState, useEffect } = React;
+
+        function AnimatedBackground() {
+            useEffect(() => {
+                const particles = [];
+                const container = document.querySelector('.animated-bg');
+                
+                for (let i = 0; i < 25; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.width = Math.random() * 6 + 2 + 'px';
+                    particle.style.height = particle.style.width;
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.animationDelay = Math.random() * 20 + 's';
+                    particle.style.animationDuration = (Math.random() * 15 + 15) + 's';
+                    container.appendChild(particle);
+                }
+            }, []);
+
+            return <div className="animated-bg"></div>;
+        }
+
+        function App() {
+            const [selectedFile, setSelectedFile] = useState(null);
+            const [previewUrl, setPreviewUrl] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const [result, setResult] = useState(null);
+            const [isDragging, setIsDragging] = useState(false);
+
+            const handleFileSelect = (file) => {
+                if (file && file.type.startsWith('image/')) {
+                    setSelectedFile(file);
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        setPreviewUrl(e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                    setResult(null);
+                }
+            };
+
+            const handleDragOver = (e) => {
+                e.preventDefault();
+                setIsDragging(true);
+            };
+
+            const handleDragLeave = () => {
+                setIsDragging(false);
+            };
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                const file = e.dataTransfer.files[0];
+                handleFileSelect(file);
+            };
+
+            const handleFileInput = (e) => {
+                const file = e.target.files[0];
+                handleFileSelect(file);
+            };
+
+            const handleAnalyze = async () => {
+                if (!selectedFile) return;
+
+                setLoading(true);
+                setResult(null);
+
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                try {
+                    const response = await fetch('/predict', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    setResult(data);
+                } catch (error) {
+                    setResult({
+                        error: true,
+                        message: 'Failed to connect to server. Please ensure the server is running.'
+                    });
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleReset = () => {
+                setSelectedFile(null);
+                setPreviewUrl(null);
+                setResult(null);
+            };
+
+            return (
+                <>
+                    <AnimatedBackground />
+                    <div className="app-container">
+                        <div className="header">
+                            <div className="logo">🏥</div>
+                            <h1>AI Medical Platform</h1>
+                            <p>Advanced Pneumonia Detection System</p>
+                        </div>
+
+                        <div className="main-card">
+                            <div className="disclaimer">
+                                <div className="disclaimer-icon">⚠️</div>
+                                <div className="disclaimer-title">Educational Purpose Only</div>
+                                <div className="disclaimer-text">
+                                    This AI system is designed for educational and demonstration purposes only. 
+                                    It is <strong>NOT a substitute for professional medical diagnosis</strong>. 
+                                    Always consult qualified healthcare professionals for medical advice, diagnosis, 
+                                    and treatment decisions.
+                                </div>
+                            </div>
+
+                            <div className="upload-section">
+                                <div 
+                                    className={`upload-area ${isDragging ? 'dragover' : ''}`}
+                                    onClick={() => document.getElementById('fileInput').click()}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                >
+                                    <div className="upload-content">
+                                        <div className="upload-icon">📁</div>
+                                        <div className="upload-text">Click or Drag to Upload X-Ray</div>
+                                        <div className="upload-subtext">Supports PNG, JPG, JPEG formats</div>
+                                    </div>
+                                    <input 
+                                        type="file" 
+                                        id="fileInput"
+                                        accept="image/*"
+                                        onChange={handleFileInput}
+                                        style={{ display: 'none' }}
+                                    />
+                                </div>
+
+                                {previewUrl && (
+                                    <div className="preview-area">
+                                        <img src={previewUrl} alt="X-Ray Preview" className="preview-image" />
+                                    </div>
+                                )}
+
+                                {selectedFile && !loading && !result && (
+                                    <button className="btn btn-primary" onClick={handleAnalyze}>
+                                        🔬 Analyze X-Ray Image
+                                    </button>
+                                )}
+                            </div>
+
+                            {loading && (
+                                <div className="loader-container">
+                                    <div className="spinner"></div>
+                                    <div className="loader-text">🧠 AI is analyzing your image...</div>
+                                </div>
+                            )}
+
+                            {result && (
+                                <div className={`result-card ${result.error ? 'positive' : (result.result && result.result.includes('Pneumonia') ? 'positive' : 'negative')}`}>
+                                    <div className="result-content">
+                                        <div className="result-icon">
+                                            {result.error ? '❌' : (result.result && result.result.includes('Pneumonia') ? '⚠️' : '✅')}
+                                        </div>
+                                        <div className="result-title">
+                                            {result.error ? 'Error' : result.result}
+                                        </div>
+
+                                        {!result.error && result.confidence && (
+                                            <div className="confidence-section">
+                                                <div className="confidence-label">Confidence Level</div>
+                                                <div className="confidence-bar">
+                                                    <div 
+                                                        className="confidence-fill" 
+                                                        style={{ width: result.confidence }}
+                                                    >
+                                                        {result.confidence}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="warning-box">
+                                            <div className="warning-title">
+                                                <span>⚕️</span>
+                                                <span>Important Medical Notice</span>
+                                            </div>
+                                            <div className="warning-text">
+                                                {result.error ? (
+                                                    result.message || 'An error occurred during analysis.'
+                                                ) : result.result && result.result.includes('Pneumonia') ? (
+                                                    <>
+                                                        <strong>AI has detected patterns consistent with pneumonia.</strong> However, this could be a false positive due to shadows or artifacts in the X-ray. <strong>Immediate consultation with a qualified radiologist and physician is essential</strong> for proper diagnosis and treatment. Do not rely solely on this AI screening.
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <strong>AI suggests normal lung pattern.</strong> While no pneumonia was detected, this could be a false negative. If you experience symptoms like persistent cough, fever, or breathing difficulties, <strong>please consult a healthcare professional immediately</strong> regardless of this result.
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <button className="btn btn-secondary" onClick={handleReset}>
+                                            🔄 Analyze Another Image
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="info-section">
+                                <div className="info-title">
+                                    <span>💡</span>
+                                    <span>Understanding AI Predictions</span>
+                                </div>
+                                <div className="info-grid">
+                                    <div className="info-card">
+                                        <div className="info-card-title">False Positive</div>
+                                        <div className="info-card-text">
+                                            AI incorrectly detects pneumonia in healthy lungs. May cause unnecessary 
+                                            stress but leads to precautionary medical checkups.
+                                        </div>
+                                    </div>
+                                    <div className="info-card">
+                                        <div className="info-card-title">False Negative</div>
+                                        <div className="info-card-text">
+                                            AI fails to detect actual pneumonia. This is dangerous as patients may not 
+                                            seek necessary treatment. Always verify with medical professionals.
+                                        </div>
+                                    </div>
+                                    <div className="info-card">
+                                        <div className="info-card-title">Common Limitations</div>
+                                        <div className="info-card-text">
+                                            Poor image quality, shadows in healthy lungs, or unusual patterns can 
+                                            confuse the AI model and lead to incorrect predictions.
+                                        </div>
+                                    </div>
+                                    <div className="info-card">
+                                        <div className="info-card-title">Best Practice</div>
+                                        <div className="info-card-text">
+                                            Use this tool as a learning aid only. Real medical diagnosis requires 
+                                            trained radiologists and comprehensive clinical evaluation.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+        {% endraw %}
+    </script>
+</body>
+</html>
